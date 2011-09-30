@@ -45,13 +45,14 @@ class HZTwitterfeed extends WP_Widget {
 		$items = $xml->item;
 	
 		$max_items = $instance['max_items'];
-		
-		//remove the twitter name prefix from the tweet that for some reason Twitter started inserting into the rss feeds
-		$parts = explode(':',$items[$i]->title);
-		$tweet = ltrim($items[$i]->title,$parts[0].":");
-						
+					
 		$i = 0;		
 		while($i<$max_items) { 
+
+			/*remove the twitter name prefix from the tweet that
+			for some reason Twitter started inserting into the rss feeds*/
+			$parts = explode(':',$items[$i]->title);
+			$tweet = ltrim($items[$i]->title,$parts[0].":");
 					
 			?>
 			<div class="tweet-wrapper">
