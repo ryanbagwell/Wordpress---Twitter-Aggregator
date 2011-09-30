@@ -38,20 +38,24 @@ class HZTwitterfeed extends WP_Widget {
 				
 		echo $before_widget;
 		
-    echo $before_title . $instance['title'] . $after_title;
+    	echo $before_title . $instance['title'] . $after_title;
 		
 		$xml = simplexml_load_string($this->get_combined_feed());
       
 		$items = $xml->item;
 	
 		$max_items = $instance['max_items'];
+		
+		//remove the twitter name prefix from the tweet that for some reason Twitter started inserting into the rss feeds
+		$parts = explode(':',$items[$i]->title);
+		$tweet = ltrim($items[$i]->title,$parts[0].":");
 						
 		$i = 0;		
 		while($i<$max_items) { 
 					
 			?>
 			<div class="tweet-wrapper">
-				<span class="tweet"><?php echo $items[$i]->title; ?></span>
+				<span class="tweet"><?php echo $tweet; ?></span>
 				<a class="url" rel="external" href="<?php echo $items[$i]->tinyUrl;?>"><?php echo $items[$i]->tinyUrl;?></a>
 				<div class="date-wrapper">
 					<span class="date"><?php echo date(get_site_option('date_format'),strtotime($items[$i]->pubDate));?></span>
@@ -115,7 +119,7 @@ class HZTwitterfeed extends WP_Widget {
 
 		//grab the latest feed urls
 		$this->set_feed_content();
-									
+		
 		//set an array to sort the feed items by timeline
 		$sort_array = array();
 		
@@ -179,7 +183,9 @@ class HZTwitterfeed extends WP_Widget {
 
 
 		//put our xml string together and add  it to the 
-		$xml = "<xml $ns_string><lastUpdate>" . time() . "</lastUpdate>$xml_str</xml>";
+		$xml = "<xml $ns_string>";
+		$xml .= "<lastUpdate>" . time() . "</lastUpdate>";
+		$xml .= "$xml_str</xml>";
 
 
 		//add a tiny url to items
