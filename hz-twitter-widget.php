@@ -74,11 +74,8 @@ class HZTwitterfeed extends WP_Widget {
 						return Math.floor(diff*60);
 					}()
 				};
-				console.log(timeParts);
 				var timeString;
 				jQuery.each(timeParts, function(key, value) {
-					console.log(key);
-					console.log(value);
 					if ( value > 0) {
 						timeString = [
 							value,
@@ -88,7 +85,6 @@ class HZTwitterfeed extends WP_Widget {
 						return false;
 					}
 				});
-				console.log(timeString);
 				return timeString;
 			};
 			jQuery.post('/wp-admin/admin-ajax.php', {
