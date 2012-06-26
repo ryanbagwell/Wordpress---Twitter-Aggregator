@@ -142,8 +142,8 @@ class HZTwitterfeed extends WP_Widget {
 		$this->feed_urls = $feeds;
 		
 		//if it's been less than 15 minutes since we last update the file, don't update it.
-		if (time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml')  < 900)
-			return false;
+		// if (time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml')  < 900)
+		// 	return false;
 
 		//grab the latest feed urls
 		$this->set_feed_content( $feeds );
@@ -166,7 +166,7 @@ class HZTwitterfeed extends WP_Widget {
 			
 		}
 		//sort them based on the timestamp value
-		arsort($sort_array,SORT_NUMERIC);
+		krsort($sort_array);
 		
 		//a placeholder for the xml string to add to the new xmldoc later
 		$xml_str = '';
