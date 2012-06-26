@@ -58,11 +58,15 @@ class HZTwitterfeed extends WP_Widget {
 				var elapsed = now.getTime() - d.getTime();
 				var timeParts = {
 					day: Math.floor(elapsed / 1000 / 60 / 60 / 24),
-					hour: Math.floor(elapsed / 1000 / 60 / 60 - 24),
+					hour: function() {
+						var d = (elapsed / 1000 / 60 / 60 / 24);
+						var diff = d - Math.floor(d);
+						return d > 0 ? Math.floor(diff*24) : 0;
+					}(),
 					minute: function() {
 						var h = elapsed / 1000 / 60 / 60;
 						var diff = h - Math.floor(h);
-						return Math.floor(diff*60);
+						return h > 0 ? Math.floor(diff*60) : 0;
 					}(), 
 					second: function() {
 						var m = elapsed / 1000 / 60;
@@ -70,16 +74,21 @@ class HZTwitterfeed extends WP_Widget {
 						return Math.floor(diff*60);
 					}()
 				};
+				console.log(timeParts);
 				var timeString;
 				jQuery.each(timeParts, function(key, value) {
-					if ( value > 0)
+					console.log(key);
+					console.log(value);
+					if ( value > 0) {
 						timeString = [
 							value,
 							key + (value > 1 ? 's' : ''),
 							'ago' 
 						].join(' ');
 						return false;
+					}
 				});
+				console.log(timeString);
 				return timeString;
 			};
 			jQuery.post('/wp-admin/admin-ajax.php', {
@@ -105,7 +114,7 @@ class HZTwitterfeed extends WP_Widget {
 							[
 								d.getHours() > 12 ? d.getHours() - 12 : d.getHours(),
 								':',
-								d.getMinutes(),
+								d.getMinutes() > 9 ? d.getMinutes() : '0' + d.getMinutes(),
 								' ',
 								d.getHours() > 12 ? 'p.m.' : 'a.m.'
 							].join('')
@@ -142,8 +151,8 @@ class HZTwitterfeed extends WP_Widget {
 		$this->feed_urls = $feeds;
 		
 		//if it's been less than 15 minutes since we last update the file, don't update it.
-		// if (time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml')  < 900)
-		// 	return false;
+		if (time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml')  < 900)
+			return false;
 
 		//grab the latest feed urls
 		$this->set_feed_content( $feeds );
