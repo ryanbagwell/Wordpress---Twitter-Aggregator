@@ -53,6 +53,35 @@ class HZTwitterfeed extends WP_Widget {
 				"November",
 				"December"	
 			];
+			function getElapsedTime( d ) {
+				var now = new Date();
+				var elapsed = now.getTime() - d.getTime();
+				var timeParts = {
+					day: Math.floor(elapsed / 1000 / 60 / 60 / 24),
+					hour: Math.floor(elapsed / 1000 / 60 / 60 - 24),
+					minute: function() {
+						var h = elapsed / 1000 / 60 / 60;
+						var diff = h - Math.floor(h);
+						return Math.floor(diff*60);
+					}(), 
+					second: function() {
+						var m = elapsed / 1000 / 60;
+						var diff = m - Math.floor(m);
+						return Math.floor(diff*60);
+					}()
+				};
+				var timeString;
+				jQuery.each(timeParts, function(key, value) {
+					if ( value > 0)
+						timeString = [
+							value,
+							key + (value > 1 ? 's' : ''),
+							'ago' 
+						].join(' ');
+						return false;
+				});
+				return timeString;
+			};
 			jQuery.post('/wp-admin/admin-ajax.php', {
 				action: 'hz_twitter_ajax',
 				feeds: <?php echo json_encode($instance['feeds']); ?>
@@ -65,8 +94,10 @@ class HZTwitterfeed extends WP_Widget {
 						$('<a />').addClass('url').attr('href',tweetURL).text(tweetURL),
 						$('<span />').addClass('date').text(
 							[
-								months[d.getMonth()-1],d.getDate(),
-								', '
+								months[d.getMonth() + 1],
+								' ',
+								d.getDate(),
+								', ',
 								,d.getFullYear()
 							].join(' ')
 						),
@@ -75,9 +106,11 @@ class HZTwitterfeed extends WP_Widget {
 								d.getHours() > 12 ? d.getHours() - 12 : d.getHours(),
 								':',
 								d.getMinutes(),
+								' ',
 								d.getHours() > 12 ? 'p.m.' : 'a.m.'
 							].join('')
 						),
+						$('<span />').addClass('elapsed').text( getElapsedTime( d ) ),
 						$('<span />').addClass('via').text($(this).find('source').first().text())
 					).css('display','none').appendTo('ul.tweets').delay(500*i).slideDown(400);
 				});
@@ -228,7 +261,6 @@ class HZTwitterfeed extends WP_Widget {
 		echo $this->get_feed_items_html();
 		die();
 	}
-	
 
 }
 
