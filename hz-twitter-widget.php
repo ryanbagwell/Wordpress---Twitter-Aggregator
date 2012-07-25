@@ -91,7 +91,7 @@ class HZTwitterfeed extends WP_Widget {
 				action: 'hz_twitter_ajax',
 				feeds: <?php echo json_encode($instance['feeds']); ?>
 			}, function(response) {
-				$(response).find('status:lt(5)').each(function(i) {
+				$(response).find('status:lt('+options.maxItems+')').each(function(i) {
 					var d = new Date($(this).find('created_at').first().text());
 					var tweetURL = $(this).find('sourceURL').text();
 					$('<li />').append(
