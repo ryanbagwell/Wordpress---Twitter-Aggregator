@@ -81,9 +81,7 @@
     	
     addItems: function( xml ) {
       var _me = this;
-      
-      console.log( _me );
-      
+
       	$( xml ).find('status:lt('+this.settings.maxItems+')').each(function(i) {
       	    
       	    var item = methods.getItem({
@@ -134,8 +132,6 @@
 
 
   $.fn.hzTwitter = function( method ) {
-    
-      console.log('called');
 
       if ( methods[method] ) {
         return methods[ method ].apply( this, Array.prototype.slice.call( arguments, 1 ));
