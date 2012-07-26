@@ -16,10 +16,7 @@ class HZTwitterfeed extends WP_Widget {
 	function HZTwitterfeed() {
   	parent::WP_Widget(false, $name = 'Latest Tweets');	
 	
-		if (is_admin()) {
-			wp_enqueue_script('hz-feed',plugins_url('hz-twitter.js',__FILE__),'jquery');
-			wp_enqueue_style('hz-feed',plugins_url('hz-twitter-admin.css',__FILE__));
-		}
+		add_action('wp_enqueue_scripts', array( $this, 'add_js' ) );
 	
 		$this->feed_urls = array();	
 		$this->feed_content = array();
@@ -30,97 +27,28 @@ class HZTwitterfeed extends WP_Widget {
 		
 		<li class='widget hz-twitter-feed-widget'>
 			<h2><?php echo $instance['title']; ?></h2>
-			<ul class="tweets"></ul>
+			<ul class="tweets">
+				
+				<?php if ( $instance['tweet_to'] != '' ): ?>
+				<li class="button">
+					<a href="https://twitter.com/<?php echo $instance['tweet_to']; ?>" class="twitter-follow-button" data-show-count="false">Follow @<?php echo $instance['tweet_to']; ?></a>
+				</li>
+				<?php endif; ?>
+			</ul>
 			<div class='extra-1'></div>
 			<div class='extra-2'></div>
 			<div class='extra-3'></div>
 		</li>
 		<script type="text/javascript">
-			var options = {
-				maxItems: '<?php echo $instance['max_items']; ?>'
-			};
-			var months = [
-				"January",
-				"February",
-				"March",
-				"April",
-				"May",
-				"June",
-				"July",
-				"August",
-				"September",
-				"October",
-				"November",
-				"December"	
-			];
-			function getElapsedTime( d ) {
-				var now = new Date();
-				var elapsed = now.getTime() - d.getTime();
-				var timeParts = {
-					day: Math.floor(elapsed / 1000 / 60 / 60 / 24),
-					hour: function() {
-						var d = (elapsed / 1000 / 60 / 60 / 24);
-						var diff = d - Math.floor(d);
-						return d > 0 ? Math.floor(diff*24) : 0;
-					}(),
-					minute: function() {
-						var h = elapsed / 1000 / 60 / 60;
-						var diff = h - Math.floor(h);
-						return h > 0 ? Math.floor(diff*60) : 0;
-					}(), 
-					second: function() {
-						var m = elapsed / 1000 / 60;
-						var diff = m - Math.floor(m);
-						return Math.floor(diff*60);
-					}()
-				};
-				var timeString;
-				jQuery.each(timeParts, function(key, value) {
-					if ( value > 0) {
-						timeString = [
-							value,
-							key + (value > 1 ? 's' : ''),
-							'ago' 
-						].join(' ');
-						return false;
-					}
+			jQuery(document).ready(function() {
+				$('ul.tweets').hzTwitter({
+					maxItems: '<?php echo $instance['max_items']; ?>',
+			  		tweetTo: '<?php echo ( array_key_exists('tweet_to', $instance ) ) ? $instance['tweet_to'] : ''; ?>',
+					feeds: <?php echo json_encode($instance['feeds']); ?>
 				});
-				return timeString;
-			};
-			jQuery.post('/wp-admin/admin-ajax.php', {
-				action: 'hz_twitter_ajax',
-				feeds: <?php echo json_encode($instance['feeds']); ?>
-			}, function(response) {
-				$(response).find('status:lt('+options.maxItems+')').each(function(i) {
-					var d = new Date($(this).find('created_at').first().text());
-					var tweetURL = $(this).find('sourceURL').text();
-					$('<li />').append(
-						$('<span />').addClass('tweet').text($(this).find('text').text()),
-						$('<a />').addClass('url').attr('href',tweetURL).text(tweetURL),
-						$('<span />').addClass('date').text(
-							[
-								months[d.getMonth() + 1],
-								' ',
-								d.getDate(),
-								', ',
-								,d.getFullYear()
-							].join(' ')
-						),
-						$('<span />').addClass('time').text(
-							[
-								d.getHours() > 12 ? d.getHours() - 12 : d.getHours(),
-								':',
-								d.getMinutes() > 9 ? d.getMinutes() : '0' + d.getMinutes(),
-								' ',
-								d.getHours() > 12 ? 'p.m.' : 'a.m.'
-							].join('')
-						),
-						$('<span />').addClass('elapsed').text( getElapsedTime( d ) ),
-						$('<span />').addClass('via').text($(this).find('source').first().text())
-					).css('display','none').appendTo('ul.tweets').delay(500*i).slideDown(400);
-				});
-			},'xml');
+			});
 		</script>
+		<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
 	
 	<?php	
 	
@@ -147,9 +75,9 @@ class HZTwitterfeed extends WP_Widget {
 		$this->feed_urls = $feeds;
 		
 		//if it's been less than 15 minutes since we last update the file, don't update it.
-		if (time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml')  < 900)
+		if ( time() - filemtime(dirname(__FILE__) . '/hz-twitter-feed.xml' )  < 900)
 			return false;
-
+		
 		//grab the latest feed urls
 		$this->set_feed_content( $feeds );
 		
@@ -185,8 +113,8 @@ class HZTwitterfeed extends WP_Widget {
 				
 		//write the new content to the file
 		$handle = fopen(dirname(__FILE__) . '/hz-twitter-feed.xml','w');
-		fwrite($handle,$xml);
-		fclose($handle);
+		fwrite( $handle, $xml );
+		fclose( $handle );
 		
 	}
 
@@ -197,6 +125,11 @@ class HZTwitterfeed extends WP_Widget {
 			<label for="<?php echo $this->get_field_id('title'); ?>">Title:</label>
 			<input id="<?php echo $this->get_field_id('title'); ?>" type="text" name="<?php echo $this->get_field_name('title'); ?>"value="<?php echo $args['title']; ?>" />
 		</div>
+		
+		<div class="hz-field-wrapper tweet-to">
+			<label>Tweet To:</label>
+			<input type="text" class="tweet-to" name="<?php echo $this->get_field_name("tweet_to"); ?>" value="<?php echo ( array_key_exists('tweet_to', $args ) ) ? $args['tweet_to'] : ''; ?>" />
+		</div>		
 		
 		<div class="hz-feed-fields hzclearfix">
 			
@@ -227,6 +160,8 @@ class HZTwitterfeed extends WP_Widget {
 			<label>Items to show:</label>
 			<input type="text" class="max-feeds" name="<?php echo $this->get_field_name("max_items"); ?>" value="<?php echo $args['max_items']; ?>" size="5" />
 		</div>
+		
+
 		
 		<span class="field-name-prefix" style="display: none"><?php echo $this->get_field_name(''); ?></span>
 		
@@ -260,6 +195,18 @@ class HZTwitterfeed extends WP_Widget {
 	
 		return $tiny_url;
 	
+	}
+	
+	function add_js() {
+
+		if ( is_admin() ) {
+			wp_enqueue_script('hz-feed',plugins_url('hz-twitter.js',__FILE__),'jquery');
+			wp_enqueue_style('hz-feed',plugins_url('hz-twitter-admin.css',__FILE__));
+		}
+	
+		if ( !is_admin() )
+			wp_enqueue_script( 'hzTwitter', plugins_url('hzTwitter.jquery.js', __FILE__ ), 'jquery' );		
+		
 	}
 	
 	function hz_twitter_ajax() {
